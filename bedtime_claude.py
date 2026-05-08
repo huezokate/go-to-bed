@@ -142,8 +142,6 @@ MESSAGES = [
 import random
 MESSAGE = random.choice(MESSAGES)
 
-DEMO_MODE = '--demo' in sys.argv
-
 
 class BedtimeClaude:
     def __init__(self):
@@ -155,20 +153,11 @@ class BedtimeClaude:
         self.sh = self.root.winfo_screenheight()
         
         # Window setup — always on top, no chrome
+        self.root.overrideredirect(True)
         self.root.attributes('-topmost', True)
         self.root.attributes('-alpha', 0.97)
-        self._bg = '#000001'
-        self.root.configure(bg=self._bg)
-        try:
-            self.root.wm_attributes('-transparentcolor', self._bg)
-            self.root.overrideredirect(True)
-        except tk.TclError:
-            # Newer macOS Tk: -transparent True + overrideredirect after update
-            self.root.wm_attributes('-transparent', True)
-            self._bg = 'systemTransparent'
-            self.root.configure(bg=self._bg)
-            self.root.update_idletasks()
-            self.root.overrideredirect(True)
+        self.root.configure(bg='#000001')
+        self.root.wm_attributes('-transparentcolor', '#000001')
         
         # Canvas for sprite + bubble
         self.bubble_w = 280
@@ -180,20 +169,19 @@ class BedtimeClaude:
             self.root,
             width=self.total_w,
             height=self.total_h,
-            bg=self._bg,
+            bg='#000001',
             highlightthickness=0
         )
         self.canvas.pack()
         
-        # Start off-screen right (or near center in demo mode)
-        center_zone = self.sw // 2 - self.total_w // 2
-        self.x = (center_zone + 60) if DEMO_MODE else (self.sw + 20)
-        self.y = self.sh // 2 - self.total_h // 2
+        # Start off-screen right
+        self.x = self.sw + 20
+        self.y = self.sh - self.total_h - 60
         self.root.geometry(f"{self.total_w}x{self.total_h}+{self.x}+{self.y}")
-
+        
         self.frame_idx = 0
         self.direction = -1  # moving left
-        self.speed = 6 if DEMO_MODE else 3
+        self.speed = 3
         self.paused = False
         self.pause_timer = 0
         self.bubble_visible = False
@@ -313,7 +301,7 @@ class BedtimeClaude:
         if self.fade_out:
             self.alpha -= 0.04
             if self.alpha <= 0:
-                if self._launch_snooze and not DEMO_MODE:
+                if self._launch_snooze:
                     self._spawn_snooze_relaunch()
                 self.root.destroy()
                 return
